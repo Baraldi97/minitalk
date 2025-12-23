@@ -1,16 +1,53 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   minitalk.c                                         :+:      :+:    :+:   */
+/*   client.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: rcosta <rcosta@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/11 19:59:58 by marvin            #+#    #+#             */
-/*   Updated: 2025/12/11 19:59:58 by marvin           ###   ########.fr       */
+/*   Created: 2025/12/23 17:50:39 by rcosta            #+#    #+#             */
+/*   Updated: 2025/12/23 17:50:39 by rcosta           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minitalk.h"
+
+static volatile sig_atomic_t	g_received = 0;
+
+static void	handle_ack(int sig)
+{
+	(void)sig;
+	g_received = 1;
+}
+
+static void	ft_atob(int pid, char c)
+{
+	int	bit;
+	int	timeout;
+
+	bit = 0;
+	while (bit < 8)
+	{
+		g_received = 0;
+		if (c & (1 << bit))
+			kill(pid, SIGUSR1);
+		else
+			kill(pid, SIGUSR2);
+		
+		timeout = 0;
+		while (!g_received)
+		{
+			if (timeout == 50)
+			{
+				write(1, "Error: Server timeout\n", 22);
+				exit(1);
+			}
+			timeout++;
+			usleep(100000);
+		}
+		bit++;
+	}
+}
 
 static int	ft_atoi(const char *str)
 {
@@ -37,43 +74,28 @@ static int	ft_atoi(const char *str)
 	return (result * sign);
 }
 
-void	ft_atob(int pid, char c)
-{
-	int	bit;
-
-	bit = 7;
-	while (bit >= 0)
-	{
-		if (c & (1 << bit))
-			kill(pid, SIGUSR1);
-		else
-			kill(pid, SIGUSR2);
-		usleep(200);          
-		bit--;
-	}
-	usleep(430);          
-}
-
 int	main(int argc, char **argv)
 {
 	int	pid;
 	int	i;
 
-	i = 0;
-	if (argc == 3)
+	if (argc != 3)
 	{
-		pid = ft_atoi(argv[1]);
-		while (argv[2][i] != '\0')
-		{
-			ft_atob(pid, argv[2][i]);
-			i++;
-		}
-		ft_atob(pid, '\0');
-	}
-	else
-	{
-		ft_printf("Error\n");
+		write(1, "Usage: ./client [PID] [STRING]\n", 37);
 		return (1);
 	}
+	pid = ft_atoi(argv[1]);
+	if (pid <= 0)
+		return (1);
+	
+	signal(SIGUSR1, handle_ack);
+	
+	i = 0;
+	while (argv[2][i])
+	{
+		ft_atob(pid, argv[2][i]);
+		i++;
+	}
+	ft_atob(pid, '\n');
 	return (0);
 }

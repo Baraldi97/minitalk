@@ -3,58 +3,54 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: rcosta <rcosta@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/11 21:21:37 by marvin            #+#    #+#             */
-/*   Updated: 2025/12/11 21:21:37 by marvin           ###   ########.fr       */
+/*   Created: 2025/12/23 17:51:00 by rcosta            #+#    #+#             */
+/*   Updated: 2025/12/23 17:51:00 by rcosta           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minitalk.h"
 
-void ft_btoa(int sig)
+void	handle_signals(int sig, siginfo_t *info, void *context)
 {
-    static int bit = 7;
-    static unsigned char c = 0;
+	static int	bit = 0;
+	static int	i = 0;
 
-    if (sig == SIGUSR1)
-        c |= (1 << bit);
-    bit--;
-
-    if (bit < 0)
-    {
-        write(1, &c, 1);
-        bit = 7;
-        c = 0;
-    }
+	(void)context;
+	if (sig == SIGUSR1)
+		i |= (0x01 << bit);
+	bit++;
+	if (bit == 8)
+	{
+		write(1, &i, 1);
+		bit = 0;
+		i = 0;
+	}
+	if (info->si_pid > 0)
+		kill(info->si_pid, SIGUSR1);
 }
-
 
 int	main(int argc, char **argv)
 {
-	int	pid;
+	int					pid;
+	struct sigaction	sa;
 
 	(void)argv;
 	if (argc != 1)
 	{
-		ft_printf("Error\n");
+		write(1, "Error: Use ./server\n", 26);
 		return (1);
 	}
 	pid = getpid();
 	ft_printf("%d\n", pid);
-	while (argc == 1)
-	{
-		struct sigaction sa;
-
-		sa.sa_handler = ft_btoa;
-		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = SA_RESTART;
-
-		sigaction(SIGUSR1, &sa, NULL);
-		sigaction(SIGUSR2, &sa, NULL);
-
-		while (1)
-			pause();
-	}
+	sa.sa_sigaction = handle_signals;
+	sa.sa_flags = SA_SIGINFO;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+	
+	while (1)
+		pause();
 	return (0);
 }
