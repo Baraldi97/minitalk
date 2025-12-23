@@ -1,18 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   client.c                                           :+:      :+:    :+:   */
+/*   minitalk.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/11 19:59:58 by marvin            #+#    #+#             */
-/*   Updated: 2025/12/22 08:49:00 by marvin           ###   ########.fr       */
+/*   Updated: 2025/12/11 19:59:58 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/minitalk.h"
-
-static volatile sig_atomic_t	g_received = 0;
+#include "../includes/minitalk.h"
 
 static int	ft_atoi(const char *str)
 {
@@ -39,40 +37,22 @@ static int	ft_atoi(const char *str)
 	return (result * sign);
 }
 
-void	handle_ack(int sig)
-{
-	(void)sig;
-	g_received = 1;
-}
-
 void	ft_atob(int pid, char c)
 {
 	int	bit;
-	int	timeout;
 
-	bit = 0;
-	while (bit < 8)
+	bit = 7;
+	while (bit >= 0)
 	{
-		g_received = 0;
-		if (c & (0x01 << bit))
+		if (c & (1 << bit))
 			kill(pid, SIGUSR1);
 		else
 			kill(pid, SIGUSR2);
-		timeout = 0;
-		while (!g_received && timeout < 1000)
-		{
-			usleep(100);
-			timeout++;
-		}
-		if (timeout >= 1000)
-		{
-			ft_printf("Timeout waiting for Signal\n");
-			exit(1);
-		}
-		bit++;
+		usleep(200);          
+		bit--;
 	}
+	usleep(430);          
 }
-
 
 int	main(int argc, char **argv)
 {
@@ -83,13 +63,12 @@ int	main(int argc, char **argv)
 	if (argc == 3)
 	{
 		pid = ft_atoi(argv[1]);
-		signal(SIGUSR1, handle_ack);
 		while (argv[2][i] != '\0')
 		{
 			ft_atob(pid, argv[2][i]);
 			i++;
 		}
-		ft_atob(pid, '\n');
+		ft_atob(pid, '\0');
 	}
 	else
 	{

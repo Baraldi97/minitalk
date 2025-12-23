@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.c                                           :+:      :+:    :+:   */
+/*   server_bonus.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/11 21:21:37 by marvin            #+#    #+#             */
-/*   Updated: 2025/12/22 08:49:00 by marvin           ###   ########.fr       */
+/*   Created: 2025/12/22 21:48:07 by marvin            #+#    #+#             */
+/*   Updated: 2025/12/22 21:48:07 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/minitalk.h"
+#include "../includes/minitalk_bonus.h"
 
-void	ft_btoa(int sig, siginfo_t *info, void *context)
+void	handle_signals(int sig, siginfo_t *info, void *context)
 {
 	static int	bit = 0;
 	static int	i = 0;
@@ -23,11 +23,12 @@ void	ft_btoa(int sig, siginfo_t *info, void *context)
 	bit++;
 	if (bit == 8)
 	{
-		ft_printf("%c", i);
+		write(1, &i, 1);
 		bit = 0;
 		i = 0;
 	}
-	kill(info->si_pid, SIGUSR1);
+	if (info->si_pid > 0)
+		kill(info->si_pid, SIGUSR1);
 }
 
 int	main(int argc, char **argv)
@@ -38,16 +39,17 @@ int	main(int argc, char **argv)
 	(void)argv;
 	if (argc != 1)
 	{
-		ft_printf("Error\n");
+		write(1, "Error: Use ./server_bonus\n", 26);
 		return (1);
 	}
 	pid = getpid();
 	ft_printf("%d\n", pid);
-	sa.sa_sigaction = ft_btoa;
+	sa.sa_sigaction = handle_signals;
 	sa.sa_flags = SA_SIGINFO;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
+	
 	while (1)
 		pause();
 	return (0);

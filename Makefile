@@ -1,40 +1,63 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: marvin <marvin@student.42.fr>              +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/12/23 10:36:01 by marvin            #+#    #+#              #
+#    Updated: 2025/12/23 10:36:01 by marvin           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-NAMEC = client
-NAMES = server
-PRINTF = libftprintf.a
-SRCC_FILES =	client.c
-SRCS_FILES =	server.c
-SRC_DIR = src/
-SRCC = $(addprefix $(SRC_DIR), $(SRCC_FILES))
-SRCS = $(addprefix $(SRC_DIR), $(SRCS_FILES))
-OBJC = ${SRCC:.c=.o}
-OBJS = ${SRCS:.c=.o}
-CC			= cc
-CFLAGS		= -Wall -Werror -Wextra
-INCLUDE = -I include
-RM = rm -rf
+NAME_CLIENT = client
+NAME_SERVER = server
+NAME_CLIENT_BONUS = client_bonus
+NAME_SERVER_BONUS = server_bonus
 
-all:	$(NAMEC) $(NAMES)
+CC = cc
+CFLAGS = -Wall -Wextra -Werror
+RM = rm -f
 
-$(NAMEC) : $(OBJC)
-		@make -C printf
-		$(CC) $(CFLAGS) $(OBJC) $(INCLUDE) printf/$(PRINTF) -o $(NAMEC)
+PRINTF_DIR = ./printf
+PRINTF = $(PRINTF_DIR)/libftprintf.a
+INC = -I. -I$(PRINTF_DIR)
 
-$(NAMES) : $(OBJS)
-		@make -C printf
-		$(CC) $(CFLAGS) $(OBJS) $(INCLUDE) printf/$(PRINTF) -o $(NAMES)
+SRC_DIR = src/mandatory
+CLIENT_SRC = $(SRC_DIR)/client.c
+SERVER_SRC = $(SRC_DIR)/server.c
 
-clean :
-		@make clean -C printf
-		${RM} ${OBJC}
-		${RM} ${OBJS}
+BONUS_DIR = src/bonus
+CLIENT_BONUS_SRC = $(BONUS_DIR)/client_bonus.c
+SERVER_BONUS_SRC = $(BONUS_DIR)/server_bonus.c
 
-fclean : clean
-		@make fclean -C printf
-		${RM} $(NAMEC)
-		${RM} $(NAMES)
-		${RM} $(PRINTF)
+all: $(PRINTF) $(NAME_CLIENT) $(NAME_SERVER)
 
-re : fclean all
+$(PRINTF):
+	@make -C $(PRINTF_DIR)
 
-.PHONY:		all clean fclean re
+$(NAME_CLIENT): $(CLIENT_SRC)
+	$(CC) $(CFLAGS) $(CLIENT_SRC) $(INC) $(PRINTF) -o $(NAME_CLIENT)
+
+$(NAME_SERVER): $(SERVER_SRC)
+	$(CC) $(CFLAGS) $(SERVER_SRC) $(INC) $(PRINTF) -o $(NAME_SERVER)
+
+bonus: $(PRINTF) $(NAME_CLIENT_BONUS) $(NAME_SERVER_BONUS)
+
+$(NAME_CLIENT_BONUS): $(CLIENT_BONUS_SRC)
+	$(CC) $(CFLAGS) $(CLIENT_BONUS_SRC) $(INC) $(PRINTF) -o $(NAME_CLIENT_BONUS)
+
+$(NAME_SERVER_BONUS): $(SERVER_BONUS_SRC)
+	$(CC) $(CFLAGS) $(SERVER_BONUS_SRC) $(INC) $(PRINTF) -o $(NAME_SERVER_BONUS)
+
+clean:
+	@make clean -C $(PRINTF_DIR)
+	$(RM) $(NAME_CLIENT) $(NAME_SERVER) $(NAME_CLIENT_BONUS) $(NAME_SERVER_BONUS)
+
+fclean: clean
+	@make fclean -C $(PRINTF_DIR)
+	$(RM) $(NAME_CLIENT) $(NAME_SERVER) $(NAME_CLIENT_BONUS) $(NAME_SERVER_BONUS)
+
+re: fclean all
+
+.PHONY: all bonus clean fclean re
