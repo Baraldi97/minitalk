@@ -39,7 +39,7 @@ int	main(int argc, char **argv)
 	(void)argv;
 	if (argc != 1)
 	{
-		write(1, "Error: Use ./server\n", 26);
+		write(1, "Error: Use ./server\n", 21);
 		return (1);
 	}
 	pid = getpid();
